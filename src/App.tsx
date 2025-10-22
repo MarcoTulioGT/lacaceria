@@ -1,153 +1,613 @@
-import React, { useState } from 'react';
+// BBTS‑inspired storefront template — React + Tailwind CSS (TypeScript / TSX)
+// NOTE: This is an original, brand‑neutral UI that mimics the *structure* of a toy/e‑commerce site
+// (header with search, category nav, promo banner, filters, product grid, sticky footer),
+// without copying BBTS branding, logos, trademarks, or proprietary assets.
+//
+// How to use:
+// 1) Ensure Tailwind CSS is set up in your project.
+// 2) Drop this component into your app (Storefront.tsx) and render <Storefront />.
+// 3) Replace placeholder data/images with your own. Wire up real cart/auth/search later.
 
-// 1. DEFINICIÓN DE TIPOS CON TYPESCRIPT (TSX)
+import React, { useMemo, useState } from "react";
 
-/**
- * Define la estructura del objeto Producto.
- * Esto asegura que los datos sean consistentes y predecibles.
- */
+// Types
 interface Product {
   id: string;
   name: string;
+  brand: string;
   price: number;
-  description: string;
-  imageUrl: string;
+  rating: number; // 0..5
+  inStock: boolean;
+  image: string;
+  tags: string[];
+  category: string;
 }
 
-/**
- * Define la estructura de los ítems en el carrito.
- */
-interface CartItem extends Product {
-  quantity: number;
-}
+// Simple helpers
+const classNames = (
+  ...c: Array<string | false | null | undefined>
+): string => c.filter(Boolean).join(" ");
 
-// 2. DATOS DE SIMULACIÓN
+// Fake dataset (replace with API results)
+const ALL_PRODUCTS: Product[] = [
+  {
+    id: "1",
+    name: "1/12 Action Figure — Mecha Commander",
+    brand: "MechaWorks",
+    price: 39.99,
+    rating: 4.6,
+    inStock: true,
+    image:
+      "https://images.unsplash.com/photo-1585386959984-a41552231658?q=80&w=1400&auto=format&fit=crop",
+    tags: ["New", "Preorder"],
+    category: "Action Figures",
+  },
+  {
+    id: "2",
+    name: "Collectors Statue — Dragon Warrior",
+    brand: "MythicForge",
+    price: 129.0,
+    rating: 4.9,
+    inStock: true,
+    image:
+      "https://images.unsplash.com/photo-1605901309584-818e25960a8b?q=80&w=1400&auto=format&fit=crop",
+    tags: ["In Stock"],
+    category: "Statues",
+  },
+  {
+    id: "3",
+    name: "Model Kit — Space Cruiser Mk II",
+    brand: "StarDock",
+    price: 54.5,
+    rating: 4.3,
+    inStock: false,
+    image:
+      "https://images.unsplash.com/photo-1581338834647-b0fb40704e21?q=80&w=1400&auto=format&fit=crop",
+    tags: ["Sold Out"],
+    category: "Model Kits",
+  },
+  {
+    id: "4",
+    name: "Retro Console — 8‑bit Classic Mini",
+    brand: "PixelWave",
+    price: 89.99,
+    rating: 4.2,
+    inStock: true,
+    image:
+      "https://images.unsplash.com/photo-1541140134513-85a161dc4a00?q=80&w=1400&auto=format&fit=crop",
+    tags: ["Hot"],
+    category: "Gaming",
+  },
+  {
+    id: "5",
+    name: "Vinyl Figure — Astro Pup",
+    brand: "Orbit Toys",
+    price: 24.99,
+    rating: 4.0,
+    inStock: true,
+    image:
+      "https://images.unsplash.com/photo-1546778316-dfda79f1c0f0?q=80&w=1400&auto=format&fit=crop",
+    tags: ["Exclusive"],
+    category: "Designer Toys",
+  },
+  {
+    id: "6",
+    name: "1/6 Scale Figure — Cyber Agent",
+    brand: "NeoFrame",
+    price: 229.0,
+    rating: 4.8,
+    inStock: true,
+    image:
+      "https://images.unsplash.com/photo-1618355776464-8666794d2524?q=80&w=1400&auto=format&fit=crop",
+    tags: ["Preorder"],
+    category: "Action Figures",
+  },
+  {
+    id: "7",
+    name: "Model Kit — Desert Walker",
+    brand: "StarDock",
+    price: 42.0,
+    rating: 4.1,
+    inStock: true,
+    image:
+      "https://images.unsplash.com/photo-1614680376739-414d95ff43df?q=80&w=1400&auto=format&fit=crop",
+    tags: ["New"],
+    category: "Model Kits",
+  },
+  {
+    id: "8",
+    name: "Premium Statue — Forest Guardian",
+    brand: "MythicForge",
+    price: 349.0,
+    rating: 5.0,
+    inStock: false,
+    image:
+      "https://images.unsplash.com/photo-1626383043665-1c1601ad77d1?q=80&w=1400&auto=format&fit=crop",
+    tags: ["Waitlist"],
+    category: "Statues",
+  },
+];
 
-const dummyProduct: Product = {
-  id: 'taza-001',
-  name: 'Taza de Código TypeScript ☕',
-  price: 19.99,
-  description: 'Una taza robusta para desarrolladores que dominan TypeScript.',
-  imageUrl: 'https://placehold.co/300x200/4a90e2/ffffff?text=TSX+Product'
-};
+const CATEGORIES = [
+  "New Arrivals",
+  "Pre‑Orders",
+  "Action Figures",
+  "Statues",
+  "Model Kits",
+  "Collectibles",
+  "Gaming",
+  "Designer Toys",
+  "Sales & Deals",
+] as const;
 
-// 3. COMPONENTE PRINCIPAL (App)
+const BRANDS = [
+  "MechaWorks",
+  "MythicForge",
+  "StarDock",
+  "PixelWave",
+  "Orbit Toys",
+  "NeoFrame",
+] as const;
 
 const App: React.FC = () => {
-  // Estado para manejar el carrito (simulado)
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [message, setMessage] = useState<string>('');
+  // UI state
+  const [query, setQuery] = useState<string>("");
+  const [category, setCategory] = useState<string | null>(null);
+  const [brandFilters, setBrandFilters] = useState<string[]>([]);
+  const [onlyInStock, setOnlyInStock] = useState<boolean>(false);
+  const [price, setPrice] = useState<[number, number]>([0, 400]);
+  const [sort, setSort] = useState<"featured" | "priceAsc" | "priceDesc" | "rating">(
+    "featured"
+  );
 
-  const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
-
-  // Lógica para agregar al carrito
-  const handleAddToCart = (product: Product) => {
-    setMessage('');
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
-
-      if (existingItem) {
-        // Si ya existe, incrementa la cantidad
-        return prevItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        // Si no existe, agrégalo al carrito
-        return [...prevItems, { ...product, quantity: 1 }];
+  const filtered: Product[] = useMemo(() => {
+    return ALL_PRODUCTS.filter((p) => {
+      const matchQuery = query
+        ? [p.name, p.brand, p.category]
+            .join(" ")
+            .toLowerCase()
+            .includes(query.toLowerCase())
+        : true;
+      const matchCategory = category
+        ? p.category === category ||
+          (category === "New Arrivals" && p.tags.includes("New")) ||
+          (category === "Pre‑Orders" && p.tags.includes("Preorder"))
+        : true;
+      const matchBrand = brandFilters.length ? brandFilters.includes(p.brand) : true;
+      const matchStock = onlyInStock ? p.inStock : true;
+      const matchPrice = p.price >= price[0] && p.price <= price[1];
+      return (
+        matchQuery && matchCategory && matchBrand && matchStock && matchPrice
+      );
+    }).sort((a, b) => {
+      switch (sort) {
+        case "priceAsc":
+          return a.price - b.price;
+        case "priceDesc":
+          return b.price - a.price;
+        case "rating":
+          return b.rating - a.rating;
+        default:
+          return 0; // featured
       }
     });
-    setMessage(`¡"${product.name}" agregado al carrito!`);
-    setTimeout(() => setMessage(''), 3000); // Borra el mensaje después de 3 segundos
+  }, [query, category, brandFilters, onlyInStock, price, sort]);
+
+  const toggleBrand = (b: string) => {
+    setBrandFilters((prev) =>
+      prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]
+    );
   };
 
-  const totalItemsInCart = cartItems.reduce((total, item) => total + item.quantity, 0);
-
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <script src="https://cdn.tailwindcss.com"></script>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-      <style>
-        {`
-          body { font-family: 'Inter', sans-serif; }
-        `}
-      </style>
-      
-      {/* HEADER Y CARRITO */}
-      <header className="flex justify-between items-center bg-white p-4 rounded-lg shadow-md mb-8">
-        <h1 className="text-3xl font-bold text-indigo-700">
-          <span role="img" aria-label="store">🛒</span> Firebase TSX Shop
-        </h1>
-        <div className="relative p-2 bg-indigo-100 rounded-full">
-          <span className="text-indigo-700 text-lg">
-            Carrito ({totalItemsInCart})
+    <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      {/* Top announcement bar */}
+      <div className="bg-red-600 text-white text-sm">
+        <div className="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between">
+          <span className="font-medium tracking-wide">
+            Free shipping on orders $100+ (US). International options available.
           </span>
-          {/* Aquí es donde se conectaría con la lógica del carrito real */}
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
-            {totalItemsInCart}
-          </span>
+          <a href="#deals" className="underline underline-offset-2">
+            Today’s Deals
+          </a>
+        </div>
+      </div>
+
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-40">
+        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded bg-red-600" />
+            <div className="text-xl font-black tracking-tight">ToyStore</div>
+          </div>
+
+          {/* Search */}
+          <div className="flex-1">
+            <label className="relative block">
+              <input
+                value={query}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setQuery(e.target.value)
+                }
+                placeholder="Search figures, brands, series…"
+                className="w-full rounded-full border border-neutral-300 bg-neutral-50 px-4 py-2 pl-10 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200"
+              />
+              <svg
+                className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                aria-hidden
+              >
+                <circle cx="11" cy="11" r="7" strokeWidth="2" />
+                <path d="M20 20l-3.5-3.5" strokeWidth="2" />
+              </svg>
+            </label>
+          </div>
+
+          {/* Quick actions */}
+          <nav className="flex items-center gap-4">
+            <a className="text-sm hover:text-red-600" href="#account">
+              Sign In
+            </a>
+            <a className="text-sm hover:text-red-600" href="#orders">
+              Orders
+            </a>
+            <button
+              className="relative rounded-full border border-neutral-300 p-2 hover:border-red-500"
+              aria-label="Cart"
+              type="button"
+            >
+              <svg
+                className="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden
+              >
+                <circle cx="9" cy="20" r="1.5" />
+                <circle cx="18" cy="20" r="1.5" />
+                <path d="M3 4h2l2 12h11l2-8H6" />
+              </svg>
+              <span className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                2
+              </span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Category bar */}
+        <div className="border-t border-neutral-200 bg-white">
+          <div className="mx-auto max-w-7xl px-4 overflow-x-auto">
+            <ul className="flex gap-6 py-3 text-sm">
+              {CATEGORIES.map((cat) => (
+                <li key={cat}>
+                  <button
+                    onClick={() => setCategory(cat === category ? null : cat)}
+                    className={classNames(
+                      "whitespace-nowrap rounded-full px-4 py-1.5",
+                      cat === category ? "bg-red-600 text-white" : "hover:bg-neutral-100"
+                    )}
+                    type="button"
+                  >
+                    {cat}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </header>
-      
-      {/* MENSAJE DE CONFIRMACIÓN */}
-      {message && (
-        <div className="bg-green-500 text-white p-3 rounded-lg shadow-lg mb-6 text-center transition-all duration-300">
-          {message}
-        </div>
-      )}
 
-      {/* DETALLE DEL PRODUCTO (SIMULACIÓN) */}
-      <main className="max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row bg-white rounded-xl shadow-2xl overflow-hidden">
-          
-          {/* Imagen del Producto */}
-          <div className="md:w-1/2 p-6 flex justify-center items-center bg-indigo-50">
-            <img 
-              src={dummyProduct.imageUrl} 
-              alt={dummyProduct.name} 
-              className="rounded-lg shadow-xl w-full max-w-sm"
-              onError={(e) => { 
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null; 
-                  target.src = "https://placehold.co/300x200/4a90e2/ffffff?text=Error+Loading"; 
-              }} 
+      {/* Promo banner */}
+      <section className="bg-gradient-to-r from-neutral-900 to-neutral-700">
+        <div className="mx-auto max-w-7xl px-4 py-10 grid gap-6 md:grid-cols-3 items-center">
+          <div className="md:col-span-2 text-white">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight">
+              Fall Collectors Event
+            </h1>
+            <p className="mt-2 text-neutral-200">
+              Pre‑orders open for limited editions. Lock in your favorites now.
+            </p>
+            <div className="mt-4 flex gap-3">
+              <button className="rounded-full bg-red-600 px-5 py-2.5 text-white font-semibold shadow hover:bg-red-700" type="button">
+                Shop Pre‑Orders
+              </button>
+              <button className="rounded-full border border-white/30 px-5 py-2.5 text-white hover:bg-white/10" type="button">
+                View New Arrivals
+              </button>
+            </div>
+          </div>
+          <div className="relative h-40 md:h-48 rounded-2xl overflow-hidden shadow-lg ring-1 ring-white/10">
+            <img
+              alt="promo"
+              className="size-full object-cover"
+              src="https://images.unsplash.com/photo-1520975661595-6457f1b7c3d3?q=80&w=1600&auto=format&fit=crop"
             />
           </div>
-          
-          {/* Detalles del Producto */}
-          <div className="md:w-1/2 p-8 flex flex-col justify-between">
-            <div>
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
-                {dummyProduct.name}
-              </h2>
-              <p className="text-indigo-600 text-xl font-semibold mb-4">
-                {formatPrice(dummyProduct.price)}
-              </p>
-              <p className="text-gray-600 mb-8 leading-relaxed">
-                {dummyProduct.description}
-              </p>
-              
-              <p className="text-sm text-gray-500 italic">
-                {/* Nota: En una app real, aquí se conectarían los datos con Firestore. */}
-                <span role="img" aria-label="note">💡</span> Este es un componente de React/TSX listo para el build.
-              </p>
-            </div>
-            
-            {/* Botón de Acción */}
-            <button
-              onClick={() => handleAddToCart(dummyProduct)}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50"
-            >
-              Comprar Ahora
-            </button>
-          </div>
         </div>
+      </section>
+
+      {/* Content */}
+      <main className="mx-auto max-w-7xl px-4 py-8 grid gap-8 md:grid-cols-[260px,1fr]">
+        {/* Filters */}
+        <aside className="hidden md:block">
+          <div className="sticky top-28 space-y-6">
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <h3 className="font-bold">Availability</h3>
+              <label className="mt-3 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={onlyInStock}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setOnlyInStock(e.target.checked)
+                  }
+                />
+                In Stock only
+              </label>
+            </div>
+
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <h3 className="font-bold">Brands</h3>
+              <div className="mt-3 space-y-2">
+                {BRANDS.map((b) => (
+                  <label key={b} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={brandFilters.includes(b)}
+                      onChange={() => toggleBrand(b)}
+                    />
+                    {b}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+              <h3 className="font-bold">Price</h3>
+              <div className="mt-3 flex items-center gap-3">
+                <input
+                  type="number"
+                  className="w-24 rounded border border-neutral-300 px-2 py-1"
+                  value={price[0]}
+                  min={0}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPrice([Number(e.target.value), price[1]])
+                  }
+                />
+                <span className="text-neutral-500">—</span>
+                <input
+                  type="number"
+                  className="w-24 rounded border border-neutral-300 px-2 py-1"
+                  value={price[1]}
+                  min={0}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPrice([price[0], Number(e.target.value)])
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Grid */}
+        <section>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm text-neutral-600">{filtered.length} products</p>
+            <div className="flex items-center gap-2 text-sm">
+              <label className="text-neutral-600">Sort</label>
+              <select
+                value={sort}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setSort(e.target.value as typeof sort)
+                }
+                className="rounded border border-neutral-300 bg-white px-2 py-1"
+              >
+                <option value="featured">Featured</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+                <option value="rating">Rating</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((p) => (
+              <article
+                key={p.id}
+                className="group rounded-2xl border border-neutral-200 bg-white p-3 shadow-sm transition hover:shadow-md"
+              >
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
+                  <img
+                    alt={p.name}
+                    src={p.image}
+                    className="size-full object-cover transition duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+                    {p.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full bg-neutral-900/80 px-2 py-0.5 text-xs font-semibold text-white backdrop-blur"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1">
+                  <h3 className="line-clamp-2 font-semibold leading-tight">{p.name}</h3>
+                  <p className="text-sm text-neutral-500">{p.brand}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold">${p.price.toFixed(2)}</div>
+                    <div
+                      className="flex items-center gap-1 text-xs text-yellow-600"
+                      aria-label={`${p.rating} out of 5`}
+                    >
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg
+                          key={i}
+                          className={classNames(
+                            "size-4",
+                            i < Math.round(p.rating) ? "opacity-100" : "opacity-30"
+                          )}
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          aria-hidden
+                        >
+                          <path d="M12 17.3l-6.2 3.7 1.7-7.1-5.5-4.7 7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      className="flex-1 rounded-full bg-neutral-900 px-4 py-2 text-white hover:bg-neutral-800 disabled:opacity-50"
+                      disabled={!p.inStock}
+                      type="button"
+                    >
+                      {p.inStock ? "Add to Cart" : "Waitlist"}
+                    </button>
+                    <button
+                      className="rounded-full border border-neutral-300 p-2 hover:border-neutral-500"
+                      aria-label="Wishlist"
+                      type="button"
+                    >
+                      <svg
+                        className="size-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden
+                      >
+                        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
 
-      {/* FOOTER */}
-      <footer className="mt-12 text-center text-gray-500 text-sm">
-        Desplegado vía Firebase Hosting. Código escrito en React con TypeScript (TSX).
+      {/* Newsletter + Footer */}
+      <section className="border-t border-neutral-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-10 grid gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="text-xl font-black">Join the Collector List</h3>
+            <p className="mt-1 text-neutral-600">
+              Get alerts for pre‑orders, restocks, and exclusive drops.
+            </p>
+          </div>
+          <form className="flex gap-3" onSubmit={(e) => e.preventDefault()}>
+            <input
+              type="email"
+              placeholder="your@email.com"
+              className="w-full rounded-full border border-neutral-300 px-4 py-2 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200"
+            />
+            <button
+              className="rounded-full bg-red-600 px-6 py-2 font-semibold text-white hover:bg-red-700"
+              type="submit"
+            >
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <footer className="bg-neutral-950 text-neutral-200">
+        <div className="mx-auto max-w-7xl px-4 py-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded bg-red-600" />
+              <div className="text-lg font-black tracking-tight">ToyStore</div>
+            </div>
+            <p className="mt-3 text-sm text-neutral-400">
+              Original, brand‑neutral template. Replace with your content and assets.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold">Shop</h4>
+            <ul className="mt-3 space-y-2 text-sm text-neutral-300">
+              <li>
+                <a href="#" className="hover:text-white">
+                  New Arrivals
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Pre‑Orders
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Deals
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Gift Cards
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold">Support</h4>
+            <ul className="mt-3 space-y-2 text-sm text-neutral-300">
+              <li>
+                <a href="#" className="hover:text-white">
+                  Help Center
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Orders & Returns
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Shipping
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Contact
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold">Company</h4>
+            <ul className="mt-3 space-y-2 text-sm text-neutral-300">
+              <li>
+                <a href="#" className="hover:text-white">
+                  About
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Careers
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-white">
+                  Terms
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-6 text-center text-sm text-neutral-400">
+          © {new Date().getFullYear()} ToyStore. All rights reserved.
+        </div>
       </footer>
     </div>
   );
