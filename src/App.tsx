@@ -313,10 +313,10 @@ const App: React.FC = () => {
             </p>
             <div className="mt-4 flex gap-3">
               <button className="rounded-full bg-red-600 px-5 py-2.5 text-white font-semibold shadow hover:bg-red-700" type="button">
-                Shop Pre-Ventas
+                Compra Pre-Ventas
               </button>
               <button className="rounded-full border border-white/30 px-5 py-2.5 text-white hover:bg-white/10" type="button">
-                View Nuevos Ingresos
+                Mira los Nuevos Ingresos
               </button>
             </div>
           </div>
