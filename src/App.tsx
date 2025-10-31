@@ -40,7 +40,7 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1585386959984-a41552231658?q=80&w=1400&auto=format&fit=crop",
     tags: ["New", "Preorder"],
-    category: "Action Figures",
+    category: "Figuras de Acción",
   },
   {
     id: "2",
@@ -51,8 +51,8 @@ const ALL_PRODUCTS: Product[] = [
     inStock: true,
     image:
       "https://images.unsplash.com/photo-1605901309584-818e25960a8b?q=80&w=1400&auto=format&fit=crop",
-    tags: ["In Stock"],
-    category: "Statues",
+    tags: ["En Stock"],
+    category: "Cars",
   },
   {
     id: "3",
@@ -64,7 +64,7 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1581338834647-b0fb40704e21?q=80&w=1400&auto=format&fit=crop",
     tags: ["Sold Out"],
-    category: "Model Kits",
+    category: "Marvel",
   },
   {
     id: "4",
@@ -76,7 +76,7 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1541140134513-85a161dc4a00?q=80&w=1400&auto=format&fit=crop",
     tags: ["Hot"],
-    category: "Gaming",
+    category: "Hotwheels",
   },
   {
     id: "5",
@@ -88,7 +88,7 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1546778316-dfda79f1c0f0?q=80&w=1400&auto=format&fit=crop",
     tags: ["Exclusive"],
-    category: "Designer Toys",
+    category: "Transformers",
   },
   {
     id: "6",
@@ -100,7 +100,7 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1618355776464-8666794d2524?q=80&w=1400&auto=format&fit=crop",
     tags: ["Preorder"],
-    category: "Action Figures",
+    category: "Figuras de Acción",
   },
   {
     id: "7",
@@ -112,7 +112,7 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1614680376739-414d95ff43df?q=80&w=1400&auto=format&fit=crop",
     tags: ["New"],
-    category: "Model Kits",
+    category: "Marvel",
   },
   {
     id: "8",
@@ -124,29 +124,29 @@ const ALL_PRODUCTS: Product[] = [
     image:
       "https://images.unsplash.com/photo-1626383043665-1c1601ad77d1?q=80&w=1400&auto=format&fit=crop",
     tags: ["Waitlist"],
-    category: "Statues",
+    category: "Cars",
   },
 ];
 
 const CATEGORIES = [
-  "New Arrivals",
-  "Pre‑Orders",
-  "Action Figures",
-  "Statues",
-  "Model Kits",
-  "Collectibles",
-  "Gaming",
-  "Designer Toys",
-  "Sales & Deals",
+  "Nuevos Ingresos",
+  "Pre-Ventas",
+  "Figuras de Acción",
+  "Cars",
+  "Marvel",
+  "Mcfarlane",
+  "Hotwheels",
+  "Transformers",
+  "Ofertas y promociones",
 ] as const;
 
-const BRANDS = [
-  "MechaWorks",
-  "MythicForge",
-  "StarDock",
-  "PixelWave",
-  "Orbit Toys",
-  "NeoFrame",
+const MARCAS = [
+  "Disney Cars",
+  "Mcfarlane",
+  "Hasbro",
+  "Mattel",
+  "Jada Toys",
+  "Funko",
 ] as const;
 
 const App: React.FC = () => {
@@ -170,8 +170,8 @@ const App: React.FC = () => {
         : true;
       const matchCategory = category
         ? p.category === category ||
-          (category === "New Arrivals" && p.tags.includes("New")) ||
-          (category === "Pre‑Orders" && p.tags.includes("Preorder"))
+          (category === "Nuevos Ingresos" && p.tags.includes("New")) ||
+          (category === "Pre-Ventas" && p.tags.includes("Preorder"))
         : true;
       const matchBrand = brandFilters.length ? brandFilters.includes(p.brand) : true;
       const matchStock = onlyInStock ? p.inStock : true;
@@ -205,10 +205,10 @@ const App: React.FC = () => {
       <div className="bg-red-600 text-white text-sm">
         <div className="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between">
           <span className="font-medium tracking-wide">
-            Free shipping on orders $100+ (US). International options available.
+            Envío gratuito en pedidos superiores a 500 Q (Capital).
           </span>
           <a href="#deals" className="underline underline-offset-2">
-            Today’s Deals
+           Ofertas de hoy
           </a>
         </div>
       </div>
@@ -219,7 +219,7 @@ const App: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded bg-red-600" />
-            <div className="text-xl font-black tracking-tight">ToyStore</div>
+            <div className="text-xl font-black tracking-tight">BrothersToys</div>
           </div>
 
           {/* Search */}
@@ -230,7 +230,7 @@ const App: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setQuery(e.target.value)
                 }
-                placeholder="Search figures, brands, series…"
+                placeholder="Busca figuras, marcas, series..."
                 className="w-full rounded-full border border-neutral-300 bg-neutral-50 px-4 py-2 pl-10 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200"
               />
               <svg
@@ -249,10 +249,10 @@ const App: React.FC = () => {
           {/* Quick actions */}
           <nav className="flex items-center gap-4">
             <a className="text-sm hover:text-red-600" href="#account">
-              Sign In
+              Iniciar Sesión
             </a>
             <a className="text-sm hover:text-red-600" href="#orders">
-              Orders
+              Ordenes
             </a>
             <button
               className="relative rounded-full border border-neutral-300 p-2 hover:border-red-500"
@@ -306,17 +306,17 @@ const App: React.FC = () => {
         <div className="mx-auto max-w-7xl px-4 py-10 grid gap-6 md:grid-cols-3 items-center">
           <div className="md:col-span-2 text-white">
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-              Fall Collectors Event
+              Scarface
             </h1>
             <p className="mt-2 text-neutral-200">
-              Pre‑orders open for limited editions. Lock in your favorites now.
+              Ya puedes reservar las ediciones limitadas. Asegura tus favoritas ahora.
             </p>
             <div className="mt-4 flex gap-3">
               <button className="rounded-full bg-red-600 px-5 py-2.5 text-white font-semibold shadow hover:bg-red-700" type="button">
-                Shop Pre‑Orders
+                Shop Pre-Ventas
               </button>
               <button className="rounded-full border border-white/30 px-5 py-2.5 text-white hover:bg-white/10" type="button">
-                View New Arrivals
+                View Nuevos Ingresos
               </button>
             </div>
           </div>
@@ -336,7 +336,7 @@ const App: React.FC = () => {
         <aside className="hidden md:block">
           <div className="sticky top-28 space-y-6">
             <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3 className="font-bold">Availability</h3>
+              <h3 className="font-bold">Disponibilidad</h3>
               <label className="mt-3 flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -345,14 +345,14 @@ const App: React.FC = () => {
                     setOnlyInStock(e.target.checked)
                   }
                 />
-                In Stock only
+                En Stock
               </label>
             </div>
 
             <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3 className="font-bold">Brands</h3>
+              <h3 className="font-bold">Marcas</h3>
               <div className="mt-3 space-y-2">
-                {BRANDS.map((b) => (
+                {MARCAS.map((b) => (
                   <label key={b} className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -366,7 +366,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <h3 className="font-bold">Price</h3>
+              <h3 className="font-bold">Precio</h3>
               <div className="mt-3 flex items-center gap-3">
                 <input
                   type="number"
@@ -395,7 +395,7 @@ const App: React.FC = () => {
         {/* Grid */}
         <section>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-neutral-600">{filtered.length} products</p>
+            <p className="text-sm text-neutral-600">{filtered.length} productos</p>
             <div className="flex items-center gap-2 text-sm">
               <label className="text-neutral-600">Sort</label>
               <select
@@ -405,10 +405,10 @@ const App: React.FC = () => {
                 }
                 className="rounded border border-neutral-300 bg-white px-2 py-1"
               >
-                <option value="featured">Featured</option>
-                <option value="priceAsc">Price: Low to High</option>
-                <option value="priceDesc">Price: High to Low</option>
-                <option value="rating">Rating</option>
+                <option value="featured">Destacado</option>
+                <option value="priceAsc">Precio: De menor a mayor</option>
+                <option value="priceDesc">Precio: De mayor a menor</option>
+                <option value="rating">Clasificación</option>
               </select>
             </div>
           </div>
@@ -497,15 +497,15 @@ const App: React.FC = () => {
       <section className="border-t border-neutral-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-10 grid gap-8 md:grid-cols-2">
           <div>
-            <h3 className="text-xl font-black">Join the Collector List</h3>
+            <h3 className="text-xl font-black">Únete a la lista de coleccionistas</h3>
             <p className="mt-1 text-neutral-600">
-              Get alerts for pre‑orders, restocks, and exclusive drops.
+              Recibe alertas sobre preventas, reposiciones y lanzamientos exclusivos.
             </p>
           </div>
           <form className="flex gap-3" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
-              placeholder="your@email.com"
+              placeholder="tu@email.com"
               className="w-full rounded-full border border-neutral-300 px-4 py-2 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200"
             />
             <button
@@ -523,90 +523,80 @@ const App: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded bg-red-600" />
-              <div className="text-lg font-black tracking-tight">ToyStore</div>
+              <div className="text-lg font-black tracking-tight">BrothersToys</div>
             </div>
             <p className="mt-3 text-sm text-neutral-400">
-              Original, brand‑neutral template. Replace with your content and assets.
+              XFamily
             </p>
           </div>
           <div>
-            <h4 className="font-semibold">Shop</h4>
+            <h4 className="font-semibold">Tienda</h4>
             <ul className="mt-3 space-y-2 text-sm text-neutral-300">
               <li>
                 <a href="#" className="hover:text-white">
-                  New Arrivals
+                  Nuevos Ingresos
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Pre‑Orders
+                 Pre-Ventas
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Deals
+                  Ofertas
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Gift Cards
+                  Tarjetas de regalo
                 </a>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold">Support</h4>
+            <h4 className="font-semibold">Ayuda</h4>
             <ul className="mt-3 space-y-2 text-sm text-neutral-300">
               <li>
                 <a href="#" className="hover:text-white">
-                  Help Center
+                  Centro de Ayuda
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Orders & Returns
+                  Pedidos y devoluciones
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Shipping
+                  Envío
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Contact
+                  Contacto
                 </a>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold">Company</h4>
+            <h4 className="font-semibold">Empresa</h4>
             <ul className="mt-3 space-y-2 text-sm text-neutral-300">
               <li>
                 <a href="#" className="hover:text-white">
-                  About
+                  Acerca
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white">
-                  Careers
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white">
-                  Privacy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white">
-                  Terms
+                  Terminos
                 </a>
               </li>
             </ul>
           </div>
         </div>
         <div className="border-t border-white/10 py-6 text-center text-sm text-neutral-400">
-          © {new Date().getFullYear()} ToyStore. All rights reserved.
+          © {new Date().getFullYear()} BrothersToys. All rights reserved.
         </div>
       </footer>
     </div>
